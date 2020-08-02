@@ -7,9 +7,9 @@ features <- as_tibble(
   read.table("./Data/UCI HAR Dataset/features.txt", 
              col.names = c("Id", "Feature")))
 
-# 7. Load the training dataset
-#   7.1 Add training data column names from features
-#   7.2 Add subject data, and activity data to the training dataset
+# Load the training dataset
+# Add training data column names from features
+#Add subject data, and activity data to the training dataset
 train <- as_tibble(read.table("./Data/UCI HAR Dataset/train/X_train.txt"))
 colnames(train) <- make.unique(features$Feature, "_")
 train <- cbind(
@@ -19,9 +19,9 @@ train <- cbind(
          Activity.Id = V1),
   train)
 
-# 8. Load the test dataset
-#   8.1 Add test data column names from features
-#   8.2 Add subject data, and activity data to the test dataset
+# Load the test dataset
+# Add test data column names from features
+# Add subject data, and activity data to the test dataset
 test <- as_tibble(read.table("./Data/UCI HAR Dataset/test/X_test.txt"))
 colnames(test) <-  make.unique(features$Feature, "_")
 test <- cbind(
@@ -40,10 +40,21 @@ totalDf <- arrange(merge(test, train,
 
 #To extract mean and std
 meanstd <- totalDf %>% 
-  select(1:3,contains("mean")| contains("std"))
-temp <- meanstd
+  select(1:3,contains("mean()")| contains("std()"))
 
-#renaming 
+#using descriptive activity names
+activity.labels <- as_tibble(
+  read.table("./Data/UCI HAR Dataset/activity_labels.txt", 
+             col.names = c("Id", "Activity")))
+meanstd$Activity.Id <- as.factor(sapply(meanstd$Activity.Id, 
+                        function(x){
+                          activity.labels$Activity[x]
+}))
+
+
+
+#renaming variable names
+temp <- meanstd
 names(meanstd) <- gsub("-", "_",names(meanstd))
 names(meanstd) <- gsub("Acc", "accel",names(meanstd))
 names(meanstd) <- gsub("^t", "time",names(meanstd))
@@ -60,11 +71,21 @@ names(meanstd) <- gsub("jerk", ".jerk",names(meanstd))
 names(meanstd) <- gsub("mag", ".mag",names(meanstd))
 names(meanstd) <- gsub("gravity", ".gravity",names(meanstd))
 
-#convert some to numeric
 
-
-#creating subject average dataframe
-subject.average  <- meanstd %>% 
+#creating summary average dataframe
+summary.average  <- meanstd %>% 
   group_by(subject.id, activity.id) %>% 
   summarise_all(mean)
   
+
+#exporting the tidy dataframes
+write.table(meanstd,"./outputs/tidy_meanandstd.txt",)
+write.table(summary.average,"./outputs/tidy_summary.txt")
+
+
+create.link <-  function(x){
+  paste("[",x,"]","(",x,")",sep = "")
+}
+
+
+create.link("link")
